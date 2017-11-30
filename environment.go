@@ -29,14 +29,18 @@ func NewEnvironment(parameters parameters) (environment, error) {
 }
 
 func toEnvironmentVariableName(name string) (*string, error) {
-	reg, err := regexp.Compile("[^_a-zA-Z0-9]+")
+	allowedCharactersRegexp, err := regexp.Compile("[^-./_a-zA-Z0-9]+")
+	if err != nil {
+		return nil, err
+	}
+	nonAlphaNumericalCharactersRegexp, err := regexp.Compile("[^a-zA-Z0-9]+")
 	if err != nil {
 		return nil, err
 	}
 
-	nameWithoutSlashes := strings.Replace(name, "/", "_", -1)
-	nameWithOnlyAlphanumericalCharacters := reg.ReplaceAllString(nameWithoutSlashes, "")
-	nameUpperCased := strings.ToUpper(nameWithOnlyAlphanumericalCharacters)
+	nameWithOnlyAllowedCharacters := allowedCharactersRegexp.ReplaceAllString(name, "")
+	nameWithOutSpecialCharacters := nonAlphaNumericalCharactersRegexp.ReplaceAllString(nameWithOnlyAllowedCharacters, "_")
+	nameUpperCased := strings.ToUpper(nameWithOutSpecialCharacters)
 
 	return &nameUpperCased, nil
 }
