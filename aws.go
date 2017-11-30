@@ -7,25 +7,27 @@ import (
 )
 
 type ssmClient struct {
-	client *ssm.SSM
+	client    *ssm.SSM
 }
 
 type parameter struct {
-	Name     string
-	Value	 string
+	Name  string
+	Value string
 }
 
 type parameters []parameter
 
 func NewClient() *ssmClient {
 	session := session.Must(session.NewSession())
-	return &ssmClient{ssm.New(session) }
+	return &ssmClient{ssm.New(session)}
 }
 
-func (s ssmClient) ParamList(filter string) (*ssm.DescribeParametersOutput, error) {
-	// TODO(nlindblad): Add support for pagination
-	params := &ssm.DescribeParametersInput{
+func (s ssmClient) paramListPaginated(filter string, nextToken *string) ([]ssm.ParameterMetadata, *string, error) {
+	var parametersMetadata []ssm.ParameterMetadata
+
+	describeParameterInput := &ssm.DescribeParametersInput{
 		MaxResults: aws.Int64(50),
+		NextToken:  nextToken,
 		Filters: []*ssm.ParametersFilter{
 			{
 				Values: []*string{
@@ -36,29 +38,79 @@ func (s ssmClient) ParamList(filter string) (*ssm.DescribeParametersOutput, erro
 		},
 	}
 
-	return s.client.DescribeParameters(params)
+	result, err := s.client.DescribeParameters(describeParameterInput)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, paramMetaData := range result.Parameters {
+		parametersMetadata = append(parametersMetadata, *paramMetaData)
+	}
+
+	return parametersMetadata, result.NextToken, nil
+}
+
+func (s ssmClient) ParamList(filter string) (*[]ssm.ParameterMetadata, error) {
+	parametersMetadata, nextToken, err := s.paramListPaginated(filter, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	for nextToken != nil {
+		var additionalParametersMetadata []ssm.ParameterMetadata
+		additionalParametersMetadata, nextToken, err = s.paramListPaginated(filter, nextToken)
+		if err != nil {
+			return nil, err
+		}
+		for _, paramMetaData := range additionalParametersMetadata {
+			parametersMetadata = append(parametersMetadata, paramMetaData)
+		}
+	}
+
+	return &parametersMetadata, nil
+}
+
+func min(a, b int) int {
+	if a <= b {
+		return a
+	}
+	return b
 }
 
 func (s ssmClient) WithPrefix(prefix string) (parameters, error) {
 	var parameters parameters
-	resp, err := s.ParamList(prefix)
+
+	parameterMetadata, err := s.ParamList(prefix)
 	if err != nil {
 		return nil, err
 	}
-	for _, param := range resp.Parameters {
+
+	// The Parameter Store API supports requesting 10 parameters at a time.
+	// This divides the list of parameter metadata into chunks of 10 in order
+	// to make as few API calls as possible.
+	for start := 0; start < len(*parameterMetadata); start += 10 {
+		end := min(start + 10, len(*parameterMetadata))
+		batch := (*parameterMetadata)[start:end]
+		parameterNames := make([]*string, len(batch))
+
+		for i, parameterMetadata := range batch {
+			parameterNames[i] = parameterMetadata.Name
+		}
 		parametersInput := &ssm.GetParametersInput{
-			Names: []*string{param.Name},
+			Names:          parameterNames,
 			WithDecryption: aws.Bool(true),
 		}
 
-		r, err := s.client.GetParameters(parametersInput)
+		result, err := s.client.GetParameters(parametersInput)
 		if err != nil {
 			return nil, err
 		}
 
-		nameWithoutPrefix := string([]rune(*param.Name)[len(prefix) + 1:])
-
-		parameters = append(parameters, parameter{nameWithoutPrefix, *r.Parameters[0].Value})
+		for _, param := range result.Parameters {
+			nameWithoutPrefix := string([]rune(*param.Name)[len(prefix)+1:])
+			parameters = append(parameters, parameter{nameWithoutPrefix, *param.Value})
+		}
 	}
+
 	return parameters, nil
 }
