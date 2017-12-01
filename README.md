@@ -149,13 +149,30 @@ Managing the environemnt variables for the service is now done within the `/my-s
 
 ### Example 3) Give EC2 hosts permissions to access specific parameters:
 
-TODO
+Based on "*[Storing Secrets with AWS ParameterStore](https://typicalrunt.me/2017/04/07/storing-secrets-with-aws-parameterstore/)*":
+
+See full Cloudformation template: [examples/example-3-cloudformation.yml](examples/example-3-cloudformation.yml)
 
 ### Example 4) Create an IAM role with permissions to access specific parameters:
 
-TODO
+See full Cloudformation template: [examples/example-4-cloudformation.yml](examples/example-4-cloudformation.yml)
 
-### Example 5) Run arbitary executable with an environment populated by confidential:
+Creates a dedicated IAM user and access keys that is allowed to decrypt and retrieve parameters with a specific prefix.
+
+### Example 5) Create an IAM role with permissions to set specific parameters:
+
+See full Cloudformation template: [examples/example-5-cloudformation.yml](examples/example-5-cloudformation.yml)
+
+Creates a dedicated IAM user and access keys that is allowed to encrypt and set parameters with a specific prefix, but not retrieve or decrypt.
+
+*Example usage*:
+
+```
+aws --profile <PROFILE> ssm put-parameter --name '<PREFIX>/<PARAMETER NAME>' --type "SecureString" --value '<VALUE>'
+```
+
+
+### Example 6) Run arbitrary executable with an environment populated by confidential:
 
 TODO + implement
 

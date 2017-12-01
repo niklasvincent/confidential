@@ -1,0 +1,100 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Simple autoscaling EC2 service using secrets management"
+
+Parameters:
+  AmiId:
+    Type: "AWS::EC2::Image::Id"
+    Default: ami-bf2ba8d0
+  KmsKeyId:
+    Type: "String"
+  EnvironmentName:
+    Type: "String"
+  InstanceType:
+    Type: "String"
+    Default: "t2.nano"
+  KeyPairName:
+    Type: "AWS::EC2::KeyPair::KeyName"
+  ProjectName:
+    Type: "String"
+  VpcId:
+    Description: ID of the VPC onto which to launch the application
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: "AWS::EC2::Subnet::Id"
+
+Resources:
+  InstanceIamRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+      Path: !Sub "/${ProjectName}/${EnvironmentName}/"
+      Policies:
+        - PolicyName: "secrets-management"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Id: "AllowAccessToParameters"
+            Statement:
+              - Sid: "AllowAccessToGetParameters"
+                Effect: "Allow"
+                Action: "ssm:GetParameters"
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ProjectName}/${EnvironmentName}/*"
+              - Sid: "AllowAccessToDecryptParameters"
+                Effect: "Allow"
+                Action: "kms:Decrypt"
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:*:key/${KmsKeyId}"
+  InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: !Sub "/${ProjectName}/${EnvironmentName}/"
+      Roles:
+        - !Ref InstanceIamRole
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId:
+        Ref: VpcId
+      GroupDescription: Open up SSH to the instance
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: '22'
+        ToPort: '22'
+        CidrIp: '0.0.0.0/0'
+  LaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      AssociatePublicIpAddress: true
+      BlockDeviceMappings:
+        - DeviceName: "/dev/sda1"
+          Ebs:
+            DeleteOnTermination: true
+            VolumeSize: 20    # GB
+            VolumeType: gp2   # SSD
+      IamInstanceProfile: !Ref InstanceProfile
+      ImageId: !Ref AmiId
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyPairName
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      UserData:
+        "Fn::Base64": !Sub |
+          #!/bin/bash
+          echo "Hello, World!"
+  AutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      DesiredCapacity: 1
+      LaunchConfigurationName: !Ref LaunchConfiguration
+      MaxSize: 2
+      MinSize: 0
+      VPCZoneIdentifier:
+        - !Ref SubnetId
