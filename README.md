@@ -1,7 +1,7 @@
 [![Build Status](https://travis-ci.org/nlindblad/confidential.svg?branch=master)](https://travis-ci.org/nlindblad/confidential)
 # confidential (working title)
 
-Export parameters from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) to the runtime environment.
+Export parameters from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) as environment variables.
 
 ## Why I wrote this?
 
