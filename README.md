@@ -176,6 +176,10 @@ aws --profile <PROFILE> ssm put-parameter --name '<PREFIX>/<PARAMETER NAME>' --t
 
 TODO + implement
 
+### Example 7) Use with supervisord:
+
+TODO + implement
+
 ## Built With
 
 * [aws/aws-sdk-go](https://github.com/aws/aws-sdk-go) - AWS SDK for Go
