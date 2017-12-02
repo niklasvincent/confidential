@@ -118,7 +118,7 @@ Every time the service is started/restarted, it runs the two `ExecStartPre` step
 
 This ensures that the service is always running using the latest published Docker image and that any configuration changes are picked up automatically.
 
-Managing the environemnt variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
+Managing the environment variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
 
 ### Example 2) Use with generic systemd services:
 
@@ -145,7 +145,7 @@ WantedBy=multi-user.target
 
 Every time the service is started/restarted, it runs the `ExecStartPre` steps and populates `/etc/my-service/prod.env` and includes it using the `EnvironmentFile` directive.
 
-Managing the environemnt variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
+Managing the environment variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
 
 ### Example 3) Give EC2 hosts permissions to access specific parameters:
 
