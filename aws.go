@@ -7,109 +7,74 @@ import (
 )
 
 type ssmClient struct {
-	client    *ssm.SSM
+	client *ssm.SSM
 }
 
-type parameter struct {
+type DecryptedParameter struct {
 	Name  string
 	Value string
 }
 
-type parameters []parameter
+type DecryptedParameters []DecryptedParameter
 
 func NewClient() *ssmClient {
 	session := session.Must(session.NewSession())
 	return &ssmClient{ssm.New(session)}
 }
 
-func (s ssmClient) paramListPaginated(filter string, nextToken *string) ([]ssm.ParameterMetadata, *string, error) {
-	var parametersMetadata []ssm.ParameterMetadata
+func (s ssmClient) paramListPaginated(prefix string, nextToken *string) ([]ssm.Parameter, *string, error) {
+	var parameters []ssm.Parameter
 
-	describeParameterInput := &ssm.DescribeParametersInput{
-		MaxResults: aws.Int64(50),
+	getParametersByPathInput := &ssm.GetParametersByPathInput{
 		NextToken:  nextToken,
-		Filters: []*ssm.ParametersFilter{
-			{
-				Values: []*string{
-					aws.String(filter),
-				},
-				Key: aws.String("Name"),
-			},
-		},
+		Path: &prefix,
+		Recursive: aws.Bool(true),
+		WithDecryption: aws.Bool(true),
 	}
 
-	result, err := s.client.DescribeParameters(describeParameterInput)
+	result, err := s.client.GetParametersByPath(getParametersByPathInput)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	for _, paramMetaData := range result.Parameters {
-		parametersMetadata = append(parametersMetadata, *paramMetaData)
+	for _, parameter := range result.Parameters {
+		parameters = append(parameters, *parameter)
 	}
 
-	return parametersMetadata, result.NextToken, nil
+	return parameters, result.NextToken, nil
 }
 
-func (s ssmClient) ParamList(filter string) (*[]ssm.ParameterMetadata, error) {
-	parametersMetadata, nextToken, err := s.paramListPaginated(filter, nil)
+func (s ssmClient) ParamList(prefix string) (*[]ssm.Parameter, error) {
+	parameters, nextToken, err := s.paramListPaginated(prefix, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	for nextToken != nil {
-		var additionalParametersMetadata []ssm.ParameterMetadata
-		additionalParametersMetadata, nextToken, err = s.paramListPaginated(filter, nextToken)
+		var additionalParameters []ssm.Parameter
+		additionalParameters, nextToken, err = s.paramListPaginated(prefix, nextToken)
 		if err != nil {
 			return nil, err
 		}
-		for _, paramMetaData := range additionalParametersMetadata {
-			parametersMetadata = append(parametersMetadata, paramMetaData)
+		for _, parameter := range additionalParameters {
+			parameters = append(parameters, parameter)
 		}
 	}
 
-	return &parametersMetadata, nil
+	return &parameters, nil
 }
 
-func min(a, b int) int {
-	if a <= b {
-		return a
-	}
-	return b
-}
+func (s ssmClient) WithPrefix(prefix string) (DecryptedParameters, error) {
+	var parameters DecryptedParameters
 
-func (s ssmClient) WithPrefix(prefix string) (parameters, error) {
-	var parameters parameters
-
-	parameterMetadata, err := s.ParamList(prefix)
+	retrievedParameters, err := s.ParamList(prefix)
 	if err != nil {
 		return nil, err
 	}
 
-	// The Parameter Store API supports requesting 10 parameters at a time.
-	// This divides the list of parameter metadata into chunks of 10 in order
-	// to make as few API calls as possible.
-	for start := 0; start < len(*parameterMetadata); start += 10 {
-		end := min(start + 10, len(*parameterMetadata))
-		batch := (*parameterMetadata)[start:end]
-		parameterNames := make([]*string, len(batch))
-
-		for i, parameterMetadata := range batch {
-			parameterNames[i] = parameterMetadata.Name
-		}
-		parametersInput := &ssm.GetParametersInput{
-			Names:          parameterNames,
-			WithDecryption: aws.Bool(true),
-		}
-
-		result, err := s.client.GetParameters(parametersInput)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, param := range result.Parameters {
-			nameWithoutPrefix := string([]rune(*param.Name)[len(prefix)+1:])
-			parameters = append(parameters, parameter{nameWithoutPrefix, *param.Value})
-		}
+	for _, parameter := range *retrievedParameters {
+		nameWithoutPrefix := string([]rune(*parameter.Name)[len(prefix)+1:])
+		parameters = append(parameters, DecryptedParameter{nameWithoutPrefix, *parameter.Value})
 	}
 
 	return parameters, nil
