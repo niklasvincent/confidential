@@ -207,3 +207,4 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Acknowledgments
 
 * [Sjeanpierre/param_api](https://github.com/Sjeanpierre/param_api) provided a great starting point for using the Amazon SSM API in Go
+* [segmentio/chamber](https://github.com/segmentio/chamber) for a nice way of implementing the `exec` command

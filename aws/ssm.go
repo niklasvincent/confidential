@@ -1,9 +1,10 @@
-package main
+package aws
 
 import (
 	"github.com/aws/aws-sdk-go/service/ssm"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 )
 
 // Wrapped Amazon SSM client
@@ -21,9 +22,28 @@ type DecryptedParameter struct {
 type DecryptedParameters []DecryptedParameter
 
 // Create new wrapped Amazon SSM client
-func NewClient() *SsmClient {
-	session := session.Must(session.NewSession())
-	return &SsmClient{ssm.New(session)}
+func NewClient(awsRegion string) (*SsmClient, error) {
+	session, err := session.NewSession(&aws.Config{
+		Region: aws.String(awsRegion),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &SsmClient{ssm.New(session)}, nil
+}
+
+// Create new wrapped Amazon SSM client
+func NewClientWithCredentials(awsRegion string, credentials *credentials.Credentials) (*SsmClient, error) {
+	session, err := session.NewSession(&aws.Config{
+		Region: aws.String(awsRegion),
+		Credentials: credentials,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &SsmClient{ssm.New(session)}, nil
 }
 
 func (s SsmClient) paramListPaginated(prefix string, nextToken *string) ([]ssm.Parameter, *string, error) {
@@ -48,7 +68,7 @@ func (s SsmClient) paramListPaginated(prefix string, nextToken *string) ([]ssm.P
 	return parameters, result.NextToken, nil
 }
 
-func (s SsmClient) ParamList(prefix string) (*[]ssm.Parameter, error) {
+func (s SsmClient) paramList(prefix string) (*[]ssm.Parameter, error) {
 	parameters, nextToken, err := s.paramListPaginated(prefix, nil)
 	if err != nil {
 		return nil, err
@@ -71,7 +91,7 @@ func (s SsmClient) ParamList(prefix string) (*[]ssm.Parameter, error) {
 func (s SsmClient) WithPrefix(prefix string) (DecryptedParameters, error) {
 	var parameters DecryptedParameters
 
-	retrievedParameters, err := s.ParamList(prefix)
+	retrievedParameters, err := s.paramList(prefix)
 	if err != nil {
 		return nil, err
 	}
