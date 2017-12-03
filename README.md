@@ -56,13 +56,17 @@ AUTHOR:
    Niklas Lindblad <niklas@lindblad.info>
 
 COMMANDS:
-     help, h  Shows a list of commands or help for one command
+     exec, e    retrieve environment variables and execute command with an updated environment
+     output, o  retrieve and atomically output environment variables to a file
+     help, h    Shows a list of commands or help for one command
 
 GLOBAL OPTIONS:
-   --prefix value    parameter prefix
-   --env-file value  output environment file
-   --help, -h        show help
-   --version, -v     print the version
+   --forwarded-profile value  AWS profile to forward credentials for in the created environment [$AWS_FORWARDED_PROFILE]
+   --prefix value             Amazon SSM parameter prefix
+   --profile value            AWS profile to use when calling Amazon SSM [$AWS_PROFILE]
+   --region value             AWS region e.g. eu-west-1 [$AWS_REGION]
+   --help, -h                 show help
+   --version, -v              print the version
 ```
 
 ## Running the tests
@@ -157,17 +161,17 @@ Managing the environment variables for the service is now done within the `/my-s
 
 Based on "*[Storing Secrets with AWS ParameterStore](https://typicalrunt.me/2017/04/07/storing-secrets-with-aws-parameterstore/)*":
 
-See full Cloudformation template: [examples/cloudformation/example-3-cloudformation.yml](examples/cloudformation/example-3-cloudformation.yml)
+See full CloudFormation template: [examples/cloudformation/example-3-cloudformation.yml](examples/cloudformation/example-3-cloudformation.yml)
 
 ### Example 4) Create an IAM role with permissions to access specific parameters:
 
-See full Cloudformation template: [examples/cloudformation/example-4-cloudformation.yml](examples/cloudformation/example-4-cloudformation.yml)
+See full CloudFormation template: [examples/cloudformation/example-4-cloudformation.yml](examples/cloudformation/example-4-cloudformation.yml)
 
 Creates a dedicated IAM user and access keys that is allowed to decrypt and retrieve parameters with a specific prefix.
 
 ### Example 5) Create an IAM role with permissions to set specific parameters:
 
-See full Cloudformation template: [examples/cloudformation/example-5-cloudformation.yml](examples/cloudformation/example-5-cloudformation.yml)
+See full CloudFormation template: [examples/cloudformation/example-5-cloudformation.yml](examples/cloudformation/example-5-cloudformation.yml)
 
 Creates a dedicated IAM user and access keys that is allowed to encrypt and set parameters with a specific prefix, but not retrieve or decrypt.
 

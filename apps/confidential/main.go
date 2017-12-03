@@ -36,6 +36,8 @@ func main() {
 		},
 	}
 
+	app.Version = "0.0.0"
+
 	app.Name = "confidential"
 	app.Authors = []cli.Author{
 		{
