@@ -5,15 +5,18 @@ import (
 	"strings"
 )
 
-type environmentVariable struct {
+// Environment variable
+type EnvironmentVariable struct {
 	Name  string
 	Value string
 }
 
-type environment []environmentVariable
+// List of environment variables
+type Environment []EnvironmentVariable
 
-func NewEnvironment(decryptedParameters DecryptedParameters) (environment, error) {
-	var environment environment
+// Create new list of environment variables from a list of decrypted Amazon SSM parameters
+func NewEnvironment(decryptedParameters DecryptedParameters) (Environment, error) {
+	var environment Environment
 
 	for _, param := range decryptedParameters {
 		name, err := toEnvironmentVariableName(param.Name)
@@ -22,7 +25,7 @@ func NewEnvironment(decryptedParameters DecryptedParameters) (environment, error
 			return nil, err
 		}
 
-		environment = append(environment, environmentVariable{*name, param.Value})
+		environment = append(environment, EnvironmentVariable{*name, param.Value})
 	}
 
 	return environment, nil

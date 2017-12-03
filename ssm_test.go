@@ -29,7 +29,7 @@ func (msp *mockSsmParameterStore) get(key string) (*ssm.Parameter) {
 
 func (msp *mockSsmParameterStore) getParametersByPath(path *string) ([]*ssm.Parameter) {
 	var parameters []*ssm.Parameter
-	for key, _ := range msp.parameters {
+	for key := range msp.parameters {
 		if strings.HasPrefix(key, *path) {
 			parameters = append(parameters, msp.get(key))
 		}
@@ -51,7 +51,7 @@ func TestSsmClient_WithPrefix(t *testing.T) {
 	expectedParameters["database_password"] = *parameterStore.get("/test/prod/database_password").Value
 	expectedParameters["cookie_secret"] = *parameterStore.get("/test/prod/cookie_secret").Value
 
-	client := ssmClient{ssm.New(session.Must(session.NewSession()))}
+	client := SsmClient{ssm.New(session.Must(session.NewSession()))}
 
 	client.client.Handlers.Clear()
 	client.client.Handlers.Send.PushBack(func(r *request.Request) {

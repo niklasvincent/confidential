@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/nlindblad/confidential.svg?branch=master)](https://travis-ci.org/nlindblad/confidential)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c5195a16de6f455986b13a5ff04388d3)](https://www.codacy.com/app/niklas/confidential?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=nlindblad/confidential&amp;utm_campaign=Badge_Grade)
 # confidential (working title)
 
 Export parameters from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) as environment variables.

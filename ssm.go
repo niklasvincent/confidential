@@ -6,23 +6,27 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 )
 
-type ssmClient struct {
+// Wrapped Amazon SSM client
+type SsmClient struct {
 	client *ssm.SSM
 }
 
+// Decrypted parameter (without prefix) from Amazon SSM
 type DecryptedParameter struct {
 	Name  string
 	Value string
 }
 
+// List of decrypted parameters (without prefix) from Amazon SSM
 type DecryptedParameters []DecryptedParameter
 
-func NewClient() *ssmClient {
+// Create new wrapped Amazon SSM client
+func NewClient() *SsmClient {
 	session := session.Must(session.NewSession())
-	return &ssmClient{ssm.New(session)}
+	return &SsmClient{ssm.New(session)}
 }
 
-func (s ssmClient) paramListPaginated(prefix string, nextToken *string) ([]ssm.Parameter, *string, error) {
+func (s SsmClient) paramListPaginated(prefix string, nextToken *string) ([]ssm.Parameter, *string, error) {
 	var parameters []ssm.Parameter
 
 	getParametersByPathInput := &ssm.GetParametersByPathInput{
@@ -44,7 +48,7 @@ func (s ssmClient) paramListPaginated(prefix string, nextToken *string) ([]ssm.P
 	return parameters, result.NextToken, nil
 }
 
-func (s ssmClient) ParamList(prefix string) (*[]ssm.Parameter, error) {
+func (s SsmClient) ParamList(prefix string) (*[]ssm.Parameter, error) {
 	parameters, nextToken, err := s.paramListPaginated(prefix, nil)
 	if err != nil {
 		return nil, err
@@ -64,7 +68,7 @@ func (s ssmClient) ParamList(prefix string) (*[]ssm.Parameter, error) {
 	return &parameters, nil
 }
 
-func (s ssmClient) WithPrefix(prefix string) (DecryptedParameters, error) {
+func (s SsmClient) WithPrefix(prefix string) (DecryptedParameters, error) {
 	var parameters DecryptedParameters
 
 	retrievedParameters, err := s.ParamList(prefix)
