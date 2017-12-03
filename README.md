@@ -78,6 +78,11 @@ TODO
 
 ## Examples
 
+The machine needs to have the following AWS IAM permissions:
+
+- `kms:Decrypt` on the relevant [Amazon KMS](https://aws.amazon.com/kms/) key used to encrypt sensitive parameters.
+- `ssm:GetParametersByPath` on the relevant resource: `arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/<PREFIX>` (**note** there should be no trailing slash or wildcards)
+
 ### Example 1) Use with Docker and systemd services:
 
 A handy way of running Docker containers supervised by systemd is to create a unit (service) using the [`systemd-docker` wrapper](https://github.com/ibuildthecloud/systemd-docker):
