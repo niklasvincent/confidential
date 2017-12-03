@@ -1,3 +1,4 @@
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/c5195a16de6f455986b13a5ff04388d3)](https://www.codacy.com/app/niklas/confidential?utm_source=github.com&utm_medium=referral&utm_content=nlindblad/confidential&utm_campaign=badger)
 [![Build Status](https://travis-ci.org/nlindblad/confidential.svg?branch=master)](https://travis-ci.org/nlindblad/confidential)
 # confidential (working title)
 
