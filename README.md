@@ -151,17 +151,17 @@ Managing the environment variables for the service is now done within the `/my-s
 
 Based on "*[Storing Secrets with AWS ParameterStore](https://typicalrunt.me/2017/04/07/storing-secrets-with-aws-parameterstore/)*":
 
-See full Cloudformation template: [examples/example-3-cloudformation.yml](examples/example-3-cloudformation.yml)
+See full Cloudformation template: [examples/cloudformation/example-3-cloudformation.yml](examples/cloudformation/example-3-cloudformation.yml)
 
 ### Example 4) Create an IAM role with permissions to access specific parameters:
 
-See full Cloudformation template: [examples/example-4-cloudformation.yml](examples/example-4-cloudformation.yml)
+See full Cloudformation template: [examples/cloudformation/example-4-cloudformation.yml](examples/cloudformation/example-4-cloudformation.yml)
 
 Creates a dedicated IAM user and access keys that is allowed to decrypt and retrieve parameters with a specific prefix.
 
 ### Example 5) Create an IAM role with permissions to set specific parameters:
 
-See full Cloudformation template: [examples/example-5-cloudformation.yml](examples/example-5-cloudformation.yml)
+See full Cloudformation template: [examples/cloudformation/example-5-cloudformation.yml](examples/cloudformation/example-5-cloudformation.yml)
 
 Creates a dedicated IAM user and access keys that is allowed to encrypt and set parameters with a specific prefix, but not retrieve or decrypt.
 

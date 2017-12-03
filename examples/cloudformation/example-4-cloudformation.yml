@@ -22,11 +22,11 @@ Resources:
           Version: "2012-10-17"
           Id: "AllowAccessToParameters"
           Statement:
-            - Sid: "AllowAccessToGetParameters"
+            - Sid: "AllowAccessToGetParametersByPath"
               Effect: "Allow"
-              Action: "ssm:GetParameters"
+              Action: "ssm:GetParametersByPath"
               Resource:
-                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ProjectName}/${EnvironmentName}/*"
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ProjectName}/${EnvironmentName}"
             - Sid: "AllowAccessToDecryptParameters"
               Effect: "Allow"
               Action: "kms:Decrypt"

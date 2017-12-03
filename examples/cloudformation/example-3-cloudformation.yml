@@ -1,0 +1,111 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+Description: "Simple autoscaling EC2 service using secrets management"
+
+Parameters:
+  KmsKeyId:
+    Type: "String"
+  EnvironmentName:
+    Type: "String"
+  InstanceType:
+    Type: "String"
+    Default: "t2.nano"
+  KeyPairName:
+    Type: "AWS::EC2::KeyPair::KeyName"
+  ProjectName:
+    Type: "String"
+
+Mappings:
+  RegionMap:
+    us-east-2:
+      "64": ami-15e9c770
+    us-east-1:
+      "64": ami-55ef662f
+    us-west-1:
+      "64": ami-a51f27c5
+    us-west-2:
+      "64": ami-bf4193c7
+    ca-central-1:
+      "64": ami-d29e25b6
+    ap-south-1:
+      "64": ami-d5c18eba
+    ap-northeast-2:
+      "64": ami-1196317f
+    ap-southeast-1:
+      "64": ami-c63d6aa5
+    ap-southeast-2:
+      "64": ami-ff4ea59d
+    ap-northeast-1:
+      "64": ami-da9e2cbc
+    eu-central-1:
+      "64": ami-bf2ba8d0
+    eu-west-1:
+      "64": ami-1a962263
+    eu-west-2:
+      "64": ami-e7d6c983
+    sa-east-1:
+      "64": ami-286f2a44
+
+Resources:
+  InstanceIamRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action:
+              - "sts:AssumeRole"
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+      Policies:
+        - PolicyName: "secrets-management"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Id: "AllowAccessToParameters"
+            Statement:
+              - Sid: "AllowAccessToGetParametersByPath"
+                Effect: "Allow"
+                Action: "ssm:GetParametersByPath"
+                Resource:
+                  - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ProjectName}/${EnvironmentName}"
+              - Sid: "AllowAccessToDecryptParameters"
+                Effect: "Allow"
+                Action: "kms:Decrypt"
+                Resource:
+                  - !Sub "arn:aws:kms:${AWS::Region}:*:key/${KmsKeyId}"
+  EC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Roles:
+        - !Ref InstanceIamRole
+  SSHSecurityGroup:
+      Type: AWS::EC2::SecurityGroup
+      Properties:
+        GroupDescription: Enable SSH access via port 22
+        SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          FromPort: 22
+          IpProtocol: tcp
+          ToPort: 22
+  ECInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      KeyName: !Ref KeyPairName
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroups:
+      - !Ref SSHSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash -xe
+          exit 0
+      InstanceType: !Ref InstanceType
+      AvailabilityZone:
+        Fn::Select:
+          - 0
+          - Fn::GetAZs: !Ref "AWS::Region"
+      ImageId: !FindInMap [RegionMap, !Ref "AWS::Region", 64]
+      Tags:
+        -
+          Key: Name
+          Value: "SSM test instance"
