@@ -3,7 +3,6 @@ package commands
 import (
 	"testing"
 	"github.com/stretchr/testify/assert"
-	"github.com/nlindblad/confidential/environment"
 )
 
 func Test_extractCommandWithFlags(t *testing.T) {
