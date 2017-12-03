@@ -1,0 +1,49 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM role for updating SSM parameters
+
+Parameters:
+  Name:
+    Description: Name of user
+    Type: String
+  KmsKeyId:
+    Type: "String"
+  EnvironmentName:
+    Type: "String"
+  ProjectName:
+    Type: "String"
+
+Resources:
+  SsmParameterUser:
+    Type: "AWS::IAM::User"
+    Properties:
+      Policies:
+      - PolicyName: "secrets-management"
+        PolicyDocument:
+          Version: "2012-10-17"
+          Id: "AllowAccessToParameters"
+          Statement:
+            - Sid: "AllowAccessToPutParameter"
+              Effect: "Allow"
+              Action: "ssm:PutParameter"
+              Resource:
+                - !Sub "arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ProjectName}/${EnvironmentName}/*"
+            - Sid: "AllowAccessToEncryptParameters"
+              Effect: "Allow"
+              Action: "kms:Encrypt"
+              Resource:
+                - !Sub "arn:aws:kms:${AWS::Region}:*:key/${KmsKeyId}"
+      UserName: !Join [ "-", [ !Ref Name, "ssm" ] ]
+
+  SsmParameterUserKey:
+    DependsOn: SsmParameterUser
+    Type: "AWS::IAM::AccessKey"
+    Properties:
+      Status: Active
+      UserName: !Ref SsmParameterUser
+
+Outputs:
+    AccessKey:
+      Value:
+        Ref: SsmParameterUserKey
+    SecretKey:
+      Value: !GetAtt SsmParameterUserKey.SecretAccessKey

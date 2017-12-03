@@ -12,10 +12,10 @@ type environmentVariable struct {
 
 type environment []environmentVariable
 
-func NewEnvironment(parameters parameters) (environment, error) {
+func NewEnvironment(decryptedParameters DecryptedParameters) (environment, error) {
 	var environment environment
 
-	for _, param := range parameters {
+	for _, param := range decryptedParameters {
 		name, err := toEnvironmentVariableName(param.Name)
 
 		if err != nil {
