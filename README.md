@@ -4,6 +4,8 @@
 
 Export parameters from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) as environment variables.
 
+See [some examples](#examples) of common use cases.
+
 ## Why I wrote this?
 
 Configuration management, specifically secrets management tends to get complicated. After having been through several projects, both in my spare time and at work, using solutions such as [Ansible Vault](https://docs.ansible.com/ansible/2.4/vault.html), private [AWS CodeCommit](https://aws.amazon.com/codecommit/) repositories or [Amazon KMS](https://aws.amazon.com/kms/) encrypted configuration files in [Amazon S3](https://aws.amazon.com/s3/), I was looking for something simpler, while still maintaining a high level of security.
@@ -30,7 +32,7 @@ Make sure you have [Go installed](https://golang.org/doc/install) and that [the 
 
 ```
 go get github.com/nlindblad/confidential
-cd $GOPATH/src/github.com/nlindblad/confidential
+cd $GOPATH/src/github.com/nlindblad/confidential/apps/confidential
 go build
 ```
 
@@ -88,7 +90,7 @@ The machine needs to have the following AWS IAM permissions:
 - `kms:Decrypt` on the relevant [Amazon KMS](https://aws.amazon.com/kms/) key used to encrypt sensitive parameters.
 - `ssm:GetParametersByPath` on the relevant resource: `arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/<PREFIX>` (**note** there should be no trailing slash or wildcards)
 
-### Example 1) Use with Docker and systemd services:
+### :whale2: Use with Docker and systemd services:
 
 A handy way of running Docker containers supervised by systemd is to create a unit (service) using the [`systemd-docker` wrapper](https://github.com/ibuildthecloud/systemd-docker):
 
@@ -100,7 +102,7 @@ After=docker.service
 
 [Service]
 TimeoutStartSec=0
-ExecStartPre=/usr/local/bin/confidential --prefix /my-service/prod --env-file /etc/my-service/prod.env
+ExecStartPre=/usr/local/bin/confidential --region eu-west-1 --prefix /my-service/prod output --env-file /etc/my-service/prod.env
 ExecStartPre=/usr/bin/docker pull username/image-name:latest
 ExecStart=/usr/local/bin/systemd-docker --cgroups name=systemd run \
     --name %n \
@@ -122,7 +124,7 @@ The following service will run `username/image-name` as a service which will get
 
 Every time the service is started/restarted, it runs the two `ExecStartPre` steps:
 
-1. Uses confidential to get the latest environment variables from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) and writes them to the file `/etc/my-service/prod.env` in a format that Docker understands
+1. Uses confidential to get the latest environment variables from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) in the `eu-west-1` AWS Region and writes them to the file `/etc/my-service/prod.env` in a format that Docker understands
 
 2. Pulls down the latest version of the `username/image-name` Docker image
 
@@ -130,7 +132,7 @@ This ensures that the service is always running using the latest published Docke
 
 Managing the environment variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
 
-### Example 2) Use with generic systemd services:
+### :horse: Use with generic systemd services:
 
 The `EnvironmentFile` directive can be used to expose the retrieved environment variable to any kind of executable running as a systemd service:
 
@@ -142,9 +144,9 @@ After=syslog.target network.target remote-fs.target nss-lookup.target
 [Service]
 Type=forking
 PIDFile=/run/my-service.pid
-ExecStartPre=/usr/local/bin/confidential --prefix /my-service/prod --env-file /etc/my-service/prod.env
-EnvironmentFile=/etc/my-service/prod.env
-ExecStart=/usr/local/bin/my-service
+ExecStartPre=/usr/local/bin/confidential --region eu-west-1 --prefix /my-service/prod output --env-file /etc/my-service/prod.env
+EnvironmentFile=-/etc/my-service/prod.env
+ExecStart=/usr/local/bin/my-service --flag=something --foo=bar
 ExecReload=/bin/kill -s HUP $MAINPID
 ExecStop=/bin/kill -s QUIT $MAINPID
 PrivateTmp=true
@@ -153,23 +155,23 @@ PrivateTmp=true
 WantedBy=multi-user.target
 ```
 
-Every time the service is started/restarted, it runs the `ExecStartPre` steps and populates `/etc/my-service/prod.env` and includes it using the `EnvironmentFile` directive.
+Every time the service is started/restarted, it runs the `ExecStartPre` steps and populates `/etc/my-service/prod.env` and includes it using the `EnvironmentFile` directive (*note the `-` before the filename .
 
-Managing the environment variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html).
+Managing the environment variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) in the `eu-west-1` AWS Region.
 
-### Example 3) Give EC2 hosts permissions to access specific parameters:
-
-Based on "*[Storing Secrets with AWS ParameterStore](https://typicalrunt.me/2017/04/07/storing-secrets-with-aws-parameterstore/)*":
+### :cloud: Give EC2 hosts permissions to access specific parameters:
 
 See full CloudFormation template: [examples/cloudformation/example-3-cloudformation.yml](examples/cloudformation/example-3-cloudformation.yml)
 
-### Example 4) Create an IAM role with permissions to access specific parameters:
+### :telescope: Create an IAM role with permissions to access specific parameters:
 
 See full CloudFormation template: [examples/cloudformation/example-4-cloudformation.yml](examples/cloudformation/example-4-cloudformation.yml)
 
 Creates a dedicated IAM user and access keys that is allowed to decrypt and retrieve parameters with a specific prefix.
 
-### Example 5) Create an IAM role with permissions to set specific parameters:
+*Note*: Some other tools using [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) use a mix of `ssm:DescribeParameters` and `ssm:GetParameters`, which makes it hard to create fine grained acess control, especially when iterating parameters requires permissions to describe **all** parameters.
+
+### :pencil2: Create an IAM role with permissions to set specific parameters:
 
 See full CloudFormation template: [examples/cloudformation/example-5-cloudformation.yml](examples/cloudformation/example-5-cloudformation.yml)
 
@@ -182,13 +184,83 @@ aws --profile <PROFILE> ssm put-parameter --name '<PREFIX>/<PARAMETER NAME>' --t
 ```
 
 
-### Example 6) Run arbitrary executable with an environment populated by confidential:
+### :shell: Run arbitrary executable with an environment populated by confidential:
 
-TODO + implement
+The simplest example of this is running the `/usr/bin/env` utility and print out the environment variables that are accessible to the newly invoked process:
 
-### Example 7) Use with supervisord:
+```
+/usr/local/bin/confidential --region eu-west-1 --prefix /my-service/prod exec -- env
+```
 
-TODO + implement
+### :octopus: Use with supervisord:
+
+```
+[program:my-service]
+command=/usr/local/bin/confidential --region eu-west-1 --prefix /my-service/prod exec -- /usr/local/bin/my-service --flag=something --foo=bar
+directory=/tmp
+autostart=true
+autorestart=true
+startretries=3
+stdout_logfile=/tmp/my-service.log
+stderr_logfile=/tmp/my-service.err.log
+user=username
+```
+
+### :card_index: Use specific AWS profile from `~/.aws/credentials`
+
+By default, the AWS SDK for Go will [automatically look for AWS credentials in a couple of pre-defined places](https://github.com/aws/aws-sdk-go#configuring-credentials).
+
+If you are using the standard `~/.aws/credentials` (used by the standard [AWS CLI tool](https://aws.amazon.com/cli/)), you can specify multiple sections with different credentials:
+
+```
+[default]
+aws_access_key_id = AKIAPEIPJKJSOJ267
+aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+
+[parameters-read]
+aws_access_key_id = AKIABCDEFGH12345
+aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+```
+
+Using the `--profile` flag, you can specify that you want to use the `parameters-read` profile instead of the `default` one (which would get picked up by the AWS SDK for Go):
+
+```
+/usr/local/bin/confidential --profile parameters-read --region eu-west-1 --prefix /my-service/prod output --env-file /etc/my-service/prod.env
+```
+
+### :fast_forward: Forward AWS credentials from `~/.aws/credentials` to new environment
+
+It is possible to forward AWS credentials from `~/.aws/credentials` for a given profile to the new enviromment using the `--forwarded-profile` flag.
+
+Given a `~/.aws/credentials` file:
+
+```
+[default]
+aws_access_key_id = AKIAPEIPJKJSOJ267
+aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+
+[parameters-read]
+aws_access_key_id = AKIABCDEFGH12345
+aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+
+[my-service]
+aws_access_key_id = AKIAHIHIIW233445
+aws_secret_access_key = XXXXXXXXXXXXXXXXXXX
+```
+
+You can use the the AWS credentials for the `parameters-read` profile to retrieve the parameters from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) and forward the AWS credentials for the `my-service` profile using:
+
+```
+/usr/local/bin/confidential --profile parameters-read --forwarded-profile my-service --region eu-west-1 --prefix /my-service/prod output --env-file /etc/my-service/prod.env
+```
+
+In the above example, `/etc/my-service/prod.env` would contain all parameters retrieved from [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) in the `eu-west-1` AWS Region in addition to:
+
+```
+AWS_ACCESS_KEY_ID=AKIAHIHIIW233445
+AWS_SECRET_ACCESS_KEY=XXXXXXXXXXXXXXXXXXX
+AWS_SESSION_TOKEN=
+```
 
 ## Built With
 
@@ -211,4 +283,6 @@ This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md
 ## Acknowledgments
 
 * [Sjeanpierre/param_api](https://github.com/Sjeanpierre/param_api) provided a great starting point for using the Amazon SSM API in Go
+* [gurusi/systemd-make-environment](https://github.com/gurusi/systemd-make-environment) for mentioning some common gotchas with `EnvironmentFile` and `ExecStartPre` with `systemd`
+* [Storing Secrets with AWS ParameterStore](https://typicalrunt.me/2017/04/07/storing-secrets-with-aws-parameterstore/) provided a great starting point for the CloudFormation templates
 * [segmentio/chamber](https://github.com/segmentio/chamber) for a nice way of implementing the `exec` command
