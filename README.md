@@ -46,7 +46,7 @@ And you should see:
 
 ```
 NAME:
-   confidential - A new cli application
+   confidential - Export parameters from AWS Systems Manager Parameters as environment variables
 
 USAGE:
    confidential [global options] command [command options] [arguments...]
