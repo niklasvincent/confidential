@@ -46,7 +46,7 @@ And you should see:
 
 ```
 NAME:
-   confidential - A new cli application
+   confidential - Export parameters from AWS Systems Manager Parameters as environment variables
 
 USAGE:
    confidential [global options] command [command options] [arguments...]
@@ -155,7 +155,7 @@ PrivateTmp=true
 WantedBy=multi-user.target
 ```
 
-Every time the service is started/restarted, it runs the `ExecStartPre` steps and populates `/etc/my-service/prod.env` and includes it using the `EnvironmentFile` directive (*note the `-` before the filename .
+Every time the service is started/restarted, it runs the `ExecStartPre` steps and populates `/etc/my-service/prod.env` and includes it using the `EnvironmentFile` directive (*note* the `-` before the filename).
 
 Managing the environment variables for the service is now done within the `/my-service/prod` namespace in [AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) in the `eu-west-1` AWS Region.
 

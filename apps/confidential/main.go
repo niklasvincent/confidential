@@ -37,6 +37,7 @@ func main() {
 	}
 
 	app.Version = "0.0.0"
+	app.Usage = "Export parameters from AWS Systems Manager Parameters as environment variables"
 
 	app.Name = "confidential"
 	app.Authors = []cli.Author{
