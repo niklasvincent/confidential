@@ -67,6 +67,9 @@ func NewClientFromContext(c *cli.Context) (*aws.SsmClient, error) {
 // Retrieve Amazon SSM parameters as environment variables for a given prefix from CLI context
 func RetrieveEnvironmentVariablesFromContext(c *cli.Context) (*environment.Environment, error) {
 	prefix, err := GetMandatoryFlag(c, "prefix")
+	if err != nil {
+		return nil, err
+	}
 	client, err := NewClientFromContext(c)
 	if err != nil {
 		return nil, err

@@ -1,11 +1,15 @@
 BINARY = confidential
 GOARCH = amd64
+DIR = apps/confidential
 
+.PHONY: linux
 linux:
-	GOOS=linux GOARCH=${GOARCH} go build -o ${BINARY}-linux-${GOARCH} . ; \
+	cd ${DIR} && GOOS=linux GOARCH=${GOARCH} go build -o ${BINARY}-linux-${GOARCH} . ; \
 
+.PHONY: darwin
 darwin:
-	GOOS=darwin GOARCH=${GOARCH} go build -o ${BINARY}-darwin-${GOARCH} . ; \
+	cd ${DIR} && GOOS=darwin GOARCH=${GOARCH} go build -o ${BINARY}-darwin-${GOARCH} . ; \
 
+.PHONY: windows
 windows:
-	GOOS=windows GOARCH=${GOARCH} go build -o ${BINARY}-windows-${GOARCH}.exe . ; \
+	cd ${DIR} && GOOS=windows GOARCH=${GOARCH} go build -o ${BINARY}-windows-${GOARCH}.exe . ; \

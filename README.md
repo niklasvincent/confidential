@@ -31,10 +31,18 @@ Make sure you have [Go installed](https://golang.org/doc/install) and that [the 
 ### Build binary
 
 ```
-go get github.com/nlindblad/confidential
+go get github.com/nlindblad/confidential/apps/confidential
 cd $GOPATH/src/github.com/nlindblad/confidential/apps/confidential
 go build
 ```
+
+Or if you have cloned this repository:
+
+```
+make PLATFORM
+```
+
+where `PLATFORM` is one of `linux`, `darwin` or `windows`.
 
 ### Run
 
@@ -89,6 +97,18 @@ The machine needs to have the following AWS IAM permissions:
 
 - `kms:Decrypt` on the relevant [Amazon KMS](https://aws.amazon.com/kms/) key used to encrypt sensitive parameters.
 - `ssm:GetParametersByPath` on the relevant resource: `arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/<PREFIX>` (**note** there should be no trailing slash or wildcards)
+
+[AWS Systems Manager Parameters](http://docs.aws.amazon.com/systems-manager/latest/userguide/sysman-paramstore-working.html) names are translated into environment variable compatible names using the following logic:
+
+1. All disallowed characters are omitted. Allowed characters are `-`, `.`, `_`, `a-z`, `A-Z` and `0-9`.
+2. Any non-alphanumerical character (not `a-z`, `A-Z` or `0-9`) is converted to an underscore (`_`).
+
+For example:
+
+`/my-prefix/database.password` becomes `DATABASE_PASSWORD` (as would `/my-prefix/database/password`).
+
+`/my-prefix/bar` simply becomes `BAR`
+
 
 ### :whale2: Use with Docker and systemd services:
 
