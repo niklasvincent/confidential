@@ -89,7 +89,37 @@ go test -v ./...
 
 ## Deployment
 
-TODO
+Ideally, check out the source code (either via Git or `go get github.com/nlindblad/confidential/apps/confidential`) and make yourself familiar with it and make sure you trust it to manage the most sensitive aspects of your application.
+
+For each release, there are also packages for Debian/Ubuntu and CentOS/Amazon Linux/Red Hat Linux on [the releases page](https://github.com/nlindblad/confidential/releases).
+
+The CentOS/Amazon Linux/Red Hat Linux RPM package is signed with the GPG key with ID [A4847C36](https://keybase.io/nlindblad), the same key used by the original author for signing each Git commit in this repository.
+
+### Self built binary
+
+Simply copy the `confidential` binary to somewhere on your server, e.g. `/usr/local/bin`.
+
+### Debian/Ubuntu
+
+```
+# wget https://github.com/nlindblad/confidential/releases/download/v0.1.0/confidential_0.1.0_amd64.deb
+...
+# dpkg -i confidential_0.1.0_amd64.deb
+...
+# which confidential
+/usr/local/bin/confidential
+```
+
+### CentOS/Amazon Linux/Red Hat Linux
+
+```
+# curl -L https://github.com/nlindblad/confidential/releases/download/v0.1.0/confidential-0.1.0-1.x86_64.rpm --output confidential-0.1.0-1.x86_64.rpm
+...
+# rpm -i confidential-0.1.0-1.x86_64.rpm
+warning: confidential-0.1.0-1.x86_64.rpm: Header V4 RSA/SHA512 Signature, key ID a4847c36: NOKEY
+# which confidential
+/usr/local/bin/confidential
+```
 
 ## Examples
 
